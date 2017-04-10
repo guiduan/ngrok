@@ -13,6 +13,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"encoding/json"
+	"net/http"
 )
 
 type Configuration struct {
@@ -35,25 +37,23 @@ type TunnelConfiguration struct {
 }
 
 func LoadConfiguration(opts *Options) (config *Configuration, err error) {
-	configPath := opts.config
-	if configPath == "" {
-		configPath = defaultPath()
-	}
-
-	log.Info("Reading configuration file %s", configPath)
-	configBuf, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		// failure to read a configuration file is only a fatal error if
-		// the user specified one explicitly
-		if opts.config != "" {
-			err = fmt.Errorf("Failed to read configuration file %s: %v", configPath, err)
+	var URL = "https://ngrok.cc/api/clientid/clientid/198f3872e7ca670f"
+	
+	log.Info("Reading configuration file %s", URL)
+	
+	if response, err := http.Get(URL); err != nil {
+		err = fmt.Errorf("Error get remote configuration file %s: %v", URL, err)
+		return
+	} else {
+		if configBuf, err := ioutil.ReadAll(response.Body); err != nil {
+			err = fmt.Errorf("Error read configuration file %v", err)
 			return
 		}
 	}
 
 	// deserialize/parse the config
 	config = new(Configuration)
-	if err = yaml.Unmarshal(configBuf, &config); err != nil {
+	if err = json.Unmarshal(configBuf, &config); err != nil {
 		err = fmt.Errorf("Error parsing configuration file %s: %v", configPath, err)
 		return
 	}
