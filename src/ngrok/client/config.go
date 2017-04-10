@@ -37,7 +37,7 @@ type TunnelConfiguration struct {
 }
 
 func LoadConfiguration(opts *Options) (config *Configuration, err error) {
-	var URL = "https://ngrok.cc/api/clientid/clientid/198f3872e7ca670f"
+	var URL = "https://ngrok.cc/api/clientid/clientid/" + opts.cid
 	
 	log.Info("Reading configuration file %s", URL)
 	
@@ -53,7 +53,7 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 
 	// deserialize/parse the config
 	config = new(Configuration)
-	if err = json.Unmarshal(configBuf, &config); err != nil {
+	if err = yaml.Unmarshal(configBuf, &config); err != nil {
 		err = fmt.Errorf("Error parsing configuration file %s: %v", configPath, err)
 		return
 	}
