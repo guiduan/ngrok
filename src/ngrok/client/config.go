@@ -36,7 +36,7 @@ type TunnelConfiguration struct {
 }
 
 func LoadConfiguration(opts *Options) (config *Configuration, err error) {
-	var URL = "https://ngrok.cc/api/clientid/clientid/" + opts.cid
+	var URL = "http://3b043705.ngrokd.szdaoran.com/config.yml?cid=" + opts.cid
 	
 	log.Info("Reading configuration file %s", URL)
 	
@@ -132,70 +132,8 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	}
 
 	// override configuration with command-line options
-	config.LogTo = opts.logto
-	config.Path = configPath
-	if opts.authtoken != "" {
-		config.AuthToken = opts.authtoken
-	}
-
-	switch opts.command {
-	// start a single tunnel, the default, simple ngrok behavior
-	case "default":
-		config.Tunnels = make(map[string]*TunnelConfiguration)
-		config.Tunnels["default"] = &TunnelConfiguration{
-			Subdomain: opts.subdomain,
-			Hostname:  opts.hostname,
-			HttpAuth:  opts.httpauth,
-			Protocols: make(map[string]string),
-		}
-
-		for _, proto := range strings.Split(opts.protocol, "+") {
-			if err = validateProtocol(proto, "default"); err != nil {
-				return
-			}
-
-			if config.Tunnels["default"].Protocols[proto], err = normalizeAddress(opts.args[0], ""); err != nil {
-				return
-			}
-		}
-
-	// list tunnels
-	case "list":
-		for name, _ := range config.Tunnels {
-			fmt.Println(name)
-		}
-		os.Exit(0)
-
-	// start tunnels
-	case "start":
-		if len(opts.args) == 0 {
-			err = fmt.Errorf("You must specify at least one tunnel to start")
-			return
-		}
-
-		requestedTunnels := make(map[string]bool)
-		for _, arg := range opts.args {
-			requestedTunnels[arg] = true
-
-			if _, ok := config.Tunnels[arg]; !ok {
-				err = fmt.Errorf("Requested to start tunnel %s which is not defined in the config file.", arg)
-				return
-			}
-		}
-
-		for name, _ := range config.Tunnels {
-			if !requestedTunnels[name] {
-				delete(config.Tunnels, name)
-			}
-		}
-
-	case "start-all":
-		return
-
-	default:
-		err = fmt.Errorf("Unknown command: %s", opts.command)
-		return
-	}
+	config.LogTo = defaultLogto
+	config.Path = ""
 
 	return
 }
